@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tom & Jerry Quiz 🐱🐭</title>
+  <!-- Fontes divertidas -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Luckiest+Guy&family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* ========== RESET & BASE ========== */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Fredoka', sans-serif;
+      background: #1e3c72; /* azul forte clássico */
+      background: radial-gradient(circle at 20% 30%, #2a5298, #0f1e3d);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow-x: hidden;
+      position: relative;
+      padding: 12px;
+      color: #1a1a1a;
+    }
+
+    /* ========== FUNDO COM PADRÃO DE QUEIJO ========== */
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background-image: 
+        radial-gradient(circle at 10% 20%, #ffd966 3px, transparent 3px),
+        radial-gradient(circle at 90% 70%, #ffd966 3px, transparent 3px),
+        radial-gradient(circle at 40% 80%, #ffe599 4px, transparent 4px);
+      background-size: 80px 80px, 120px 120px, 150px 150px;
+      opacity: 0.18;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ========== JERRY CORRENDO (efeito especial obrigatório) ========== */
+    .jerry-runner {
+      position: fixed;
+      bottom: 6px;
+      left: -140px;
+      width: 110px;
+      height: 60px;
+      z-index: 999;
+      pointer-events: none;
+      animation: jerrySprint 9s linear infinite;
+      filter: drop-shadow(0 6px 4px rgba(0,0,0,0.3));
+    }
+
+    .jerry-runner svg {
+      width: 100%;
+      height: 100%;
+      animation: jerryBounce 0.25s infinite alternate ease-in-out;
+    }
+
+    @keyframes jerrySprint {
+      0%   { left: -140px; transform: scaleX(1); }
+      45%  { left: 100%; transform: scaleX(1); }
+      50%  { left: 100%; transform: scaleX(-1); } /* vira */
+      95%  { left: -140px; transform: scaleX(-1); }
+      100% { left: -140px; transform: scaleX(1); }
+    }
+
+    @keyframes jerryBounce {
+      from { transform: translateY(0px) rotate(-3deg); }
+      to   { transform: translateY(-8px) rotate(3deg); }
+    }
+
+    /* ========== CONTAINER PRINCIPAL ========== */
+    .quiz-wrapper {
+      width: 100%;
+      max-width: 800px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .quiz-card {
+      background: #fff8e7;
+      border: 6px solid #111;
+      border-radius: 36px;
+      box-shadow: 14px 14px 0 #111, 0 0 0 6px #ffd966;
+      padding: 24px 22px 30px;
+      position: relative;
+      overflow: hidden;
+      animation: cardPop 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+      min-height: 430px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    @keyframes cardPop {
+      0%   { transform: scale(0.7) rotate(-2deg); opacity: 0; }
+      70%  { transform: scale(1.03) rotate(1deg); }
+      100% { transform: scale(1) rotate(0deg); opacity: 1; }
+    }
+
+    /* ========== CABEÇALHO COM TOM E JERRY ========== */
+    .header-characters {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-bottom: 6px;
+      padding: 0 6px;
+      position: relative;
+    }
+
+    .character-box {
+      width: 92px;
+      height: 92px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.3s ease;
+    }
+
+    .character-box:hover {
+      transform: scale(1.15) rotate(-4deg);
+    }
+
+    .character-box.tom-box:hover {
+      transform: scale(1.15) rotate(4deg);
+    }
+
+    .character-box svg {
+      width: 100%;
+      height: 100%;
+      filter: drop-shadow(3px 4px 0 rgba(0,0,0,0.25));
+    }
+
+    .title-area {
+      text-align: center;
+      flex: 1;
+      padding-bottom: 4px;
+    }
+
+    .main-title {
+      font-family: 'Luckiest Guy', cursive;
+      font-size: clamp(1.7rem, 6vw, 2.7rem);
+      line-height: 1;
+      color: #ffcc00;
+      -webkit-text-stroke: 3px #111;
+      text-shadow: 4px 4px 0 #c0392b, 8px 8px 0 rgba(0,0,0,0.15);
+      letter-spacing: 1px;
+      animation: titleWiggle 3s infinite ease-in-out;
+      transform-origin: center;
+    }
+
+    @keyframes titleWiggle {
+      0%, 100% { transform: rotate(-1deg) scale(1); }
+      50%      { transform: rotate(1.5deg) scale(1.03); }
+    }
+
+    .subtitle {
+      font-family: 'Fredoka', sans-serif;
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: #b03a2e;
+      letter-spacing: 1px;
+      margin-top: 2px;
+    }
+
+    /* ========== BARRA DE STATUS (TIMER + PROGRESSO) ========== */
+    .status-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      background: #2a5298;
+      border: 4px solid #111;
+      border-radius: 999px;
+      padding: 8px 18px;
+      margin: 10px 0 16px;
+      box-shadow: 4px 4px 0 #111;
+      color: #fff;
+      font-weight: 700;
+    }
+
+    .timer, .question-counter {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: clamp(0.9rem, 2.5vw, 1.1rem);
+    }
+
+    .timer span, .question-counter span {
+      background: #ffcc00;
+      color: #111;
+      padding: 3px 10px;
+      border-radius: 999px;
+      border: 2px solid #111;
+      font-family: 'Luckiest Guy', cursive;
+      font-size: 1.15rem;
+      min-width: 68px;
+      text-align: center;
+      display: inline-block;
+      line-height: 1.2;
+    }
+
+    .timer-icon, .counter-icon {
+      font-size: 1.2rem;
+    }
+
+    /* ========== ÁREA DA PERGUNTA ========== */
+    .question-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .question-screen {
+      animation: questionSlideIn 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    }
+
+    @keyframes questionSlideIn {
+      0%   { opacity: 0; transform: translateY(30px) scale(0.95); }
+      100% { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .question-screen.slide-out {
+      animation: questionSlideOut 0.35s ease-in forwards;
+    }
+
+    @keyframes questionSlideOut {
+      0%   { opacity: 1; transform: translateY(0) scale(1); }
+      100% { opacity: 0; transform: translateY(-28px) scale(0.96); }
+    }
+
+    .question-text {
+      background: #ffffff;
+      border: 5px solid #111;
+      border-radius: 24px;
+      padding: 18px 20px;
+      margin-bottom: 20px;
+      box-shadow: 6px 6px 0 #ffcc00;
+      font-weight: 700;
+      font-size: clamp(1.05rem, 3.1vw, 1.35rem);
+      text-align: center;
+      line-height: 1.35;
+      color: #111;
+      position: relative;
+      transition: transform 0.3s ease;
+    }
+
+    .question-text:hover {
+      transform: translateY(-2px) rotate(-0.5deg);
+    }
+
+    /* ========== BOTÕES DE RESPOSTA ========== */
+    .options-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .option-btn {
+      background: #ffd966;
+      border: 4px solid #111;
+      border-radius: 22px;
+      padding: 16px 14px;
+      font-family: 'Fredoka', sans-serif;
+      font-weight: 700;
+      font-size: clamp(0.92rem, 2.8vw, 1.1rem);
+      color: #111;
+      cursor: pointer;
+      transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.2s;
+      box-shadow: 5px 5px 0 #111;
+      text-align: center;
+      line-height: 1.25;
+      position: relative;
+      overflow: hidden;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    .option-btn:hover:not(:disabled) {
+      background: #ffe9a8;
+      transform: translate(-3px, -3px) rotate(-1deg) scale(1.02);
+      box-shadow: 8px 8px 0 #111;
+    }
+
+    .option-btn:active:not(:disabled) {
+      transform: translate(2px, 2px) scale(0.97);
+      box-shadow: 2px 2px 0 #111;
+    }
+
+    .option-btn:disabled {
+      cursor: default;
+      opacity: 0.85;
+    }
+
+    /* Feedback de resposta */
+    .option-btn.correct {
+      background: #7bd88f !important;
+      border-color: #1b5e20;
+      color: #0a2e0f;
+      animation: correctPop 0.5s ease;
+    }
+
+    .option-btn.wrong {
+      background: #f28b82 !important;
+      border-color: #b71c1c;
+      color: #3a0505;
+      animation: wrongShake 0.5s ease;
+    }
+
+    @keyframes correctPop {
+      0%   { transform: scale(1); }
+      45%  { transform: scale(1.1) rotate(2deg); }
+      100% { transform: scale(1); }
+    }
+
+    @keyframes wrongShake {
+      0%, 100% { transform: translateX(0); }
+      20%      { transform: translateX(-9px); }
+      40%      { transform: translateX(9px); }
+      60%      { transform: translateX(-5px); }
+      80%      { transform: translateX(5px); }
+    }
+
+    .option-btn .feedback-icon {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 1.4rem;
+      animation: popIn 0.4s ease;
+    }
+
+    @keyframes popIn {
+      0%   { opacity: 0; transform: translateY(-50%) scale(0); }
+      60%  { opacity: 1; transform: translateY(-50%) scale(1.3); }
+      100% { opacity: 1; transform: translateY(-50%) scale(1); }
+    }
+
+    /* ========== TELA DE RESULTADOS ========== */
+    .results-screen {
+      text-align: center;
+      animation: resultPop 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 0;
+    }
+
+    @keyframes resultPop {
+      0%   { transform: scale(0.7) rotate(-3deg); opacity: 0; }
+      70%  { transform: scale(1.04) rotate(1deg); }
+      100% { transform: scale(1) rotate(0); opacity: 1; }
+    }
+
+    .results-title {
+      font-family: 'Luckiest Guy', cursive;
+      font-size: clamp(1.8rem, 6vw, 2.6rem);
+      color: #ffcc00;
+      -webkit-text-stroke: 3px #111;
+      text-shadow: 4px 4px 0 #c0392b;
+      margin-bottom: 6px;
+    }
+
+    .trophy {
+      font-size: 3.2rem;
+      animation: trophyBounce 1.1s infinite ease-in-out alternate;
+      line-height: 1;
+    }
+
+    @keyframes trophyBounce {
+      from { transform: translateY(0) scale(1) rotate(-5deg); }
+      to   { transform: translateY(-12px) scale(1.1) rotate(5deg); }
+    }
+
+    .stats-grid {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 14px;
+      margin: 10px 0 16px;
+      width: 100%;
+    }
+
+    .stat-box {
+      background: #2a5298;
+      border: 4px solid #111;
+      border-radius: 20px;
+      padding: 12px 22px;
+      box-shadow: 5px 5px 0 #111;
+      color: #fff;
+      font-weight: 700;
+      min-width: 110px;
+      transition: transform 0.2s;
+    }
+
+    .stat-box:hover {
+      transform: translateY(-4px) scale(1.04);
+    }
+
+    .stat-box .stat-value {
+      font-family: 'Luckiest Guy', cursive;
+      font-size: 1.9rem;
+      display: block;
+      color: #ffcc00;
+      line-height: 1.1;
+      text-shadow: 2px 2px 0 #111;
+    }
+
+    .stat-box .stat-label {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.7px;
+    }
+
+    .stat-box.acertos .stat-value { color: #7bd88f; }
+    .stat-box.erros .stat-value   { color: #f28b82; }
+
+    .play-again-btn {
+      background: #ffcc00;
+      border: 5px solid #111;
+      border-radius: 999px;
+      padding: 16px 44px;
+      font-family: 'Luckiest Guy', cursive;
+      font-size: clamp(1.2rem, 4vw, 1.7rem);
+      color: #111;
+      cursor: pointer;
+      box-shadow: 7px 7px 0 #111;
+      transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.2s;
+      margin-top: 6px;
+      letter-spacing: 1px;
+      animation: btnPulse 1.6s infinite ease-in-out;
+    }
+
+    @keyframes btnPulse {
+      0%, 100% { transform: scale(1); }
+      50%      { transform: scale(1.05); }
+    }
+
+    .play-again-btn:hover {
+      background: #ffe9a8;
+      transform: translate(-4px, -4px) rotate(-2deg) scale(1.05);
+      box-shadow: 11px 11px 0 #111;
+      animation-play-state: paused;
+    }
+
+    .play-again-btn:active {
+      transform: translate(2px, 2px) scale(0.97);
+      box-shadow: 3px 3px 0 #111;
+    }
+
+    /* ========== RESPONSIVIDADE ========== */
+    @media (max-width: 560px) {
+      .quiz-card {
+        padding: 18px 14px 24px;
+        border-width: 5px;
+        border-radius: 28px;
+        box-shadow: 10px 10px 0 #111, 0 0 0 5px #ffd966;
+      }
+      .options-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+      }
+      .option-btn {
+        padding: 14px 10px;
+      }
+      .character-box {
+        width: 66px;
+        height: 66px;
+      }
+      .status-bar {
+        padding: 6px 12px;
+        gap: 6px;
+      }
+      .timer span, .question-counter span {
+        font-size: 1rem;
+        min-width: 58px;
+        padding: 2px 8px;
+      }
+      .jerry-runner {
+        width: 80px;
+        height: 44px;
+      }
+      .stat-box {
+        padding: 10px 16px;
+        min-width: 92px;
+      }
+      .stat-box .stat-value {
+        font-size: 1.6rem;
+      }
+    }
+
+    @media (max-width: 380px) {
+      .header-characters {
+        flex-wrap: wrap;
+      }
+      .character-box {
+        width: 56px;
+        height: 56px;
+      }
+      .title-area {
+        order: -1;
+        width: 100%;
+        flex: none;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ===== JERRY CORRENDO (efeito especial) ===== -->
+  <div class="jerry-runner" aria-hidden="true">
+    <svg viewBox="0 0 120 70" xmlns="http://www.w3.org/2000/svg">
+      <!-- Corpo do Jerry -->
+      <ellipse cx="60" cy="42" rx="34" ry="20" fill="#c68642" stroke="#111" stroke-width="3.5"/>
+      <!-- Barriga -->
+      <ellipse cx="60" cy="46" rx="22" ry="13" fill="#f5d6a8" stroke="#111" stroke-width="2.5"/>
+      <!-- Cabeça -->
+      <circle cx="94" cy="28" r="19" fill="#c68642" stroke="#111" stroke-width="3.5"/>
+      <!-- Orelhas -->
+      <ellipse cx="86" cy="10" rx="9" ry="11" fill="#c68642" stroke="#111" stroke-width="3" transform="rotate(-25 86 10)"/>
+      <ellipse cx="103" cy="8" rx="8" ry="10" fill="#c68642" stroke="#111" stroke-width="3" transform="rotate(15 103 8)"/>
+      <ellipse cx="87" cy="12" rx="4" ry="5.5" fill="#f5b7b7" transform="rotate(-25 87 12)"/>
+      <ellipse cx="103" cy="10" rx="3.5" ry="5" fill="#f5b7b7" transform="rotate(15 103 10)"/>
+      <!-- Olhos -->
+      <ellipse cx="91" cy="25" rx="4.5" ry="5.5" fill="#fff" stroke="#111" stroke-width="2"/>
+      <ellipse cx="102" cy="24" rx="4.5" ry="5.5" fill="#fff" stroke="#111" stroke-width="2"/>
+      <circle cx="92" cy="26" r="2.3" fill="#111"/>
+      <circle cx="103" cy="25" r="2.3" fill="#111"/>
+      <!-- Focinho -->
+      <ellipse cx="98" cy="34" rx="6" ry="4" fill="#f5d6a8" stroke="#111" stroke-width="2"/>
+      <circle cx="98" cy="32" r="2" fill="#111"/>
+      <!-- Sorriso -->
+      <path d="M93 37 Q98 42 103 37" stroke="#111" stroke-width="2" fill="none" stroke-linecap="round"/>
+      <!-- Bigodes -->
+      <line x1="104" y1="32" x2="116" y2="29" stroke="#111" stroke-width="1.8" stroke-linecap="round"/>
+      <line x1="104" y1="35" x2="117" y2="35" stroke="#111" stroke-width="1.8" stroke-linecap="round"/>
+      <line x1="104" y1="38" x2="116" y2="41" stroke="#111" stroke-width="1.8" stroke-linecap="round"/>
+      <!-- Braços correndo -->
+      <path d="M40 34 Q25 26 18 36" stroke="#111" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+      <path d="M42 48 Q28 56 20 50" stroke="#111" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+      <!-- Pernas correndo -->
+      <path d="M34 58 Q26 66 18 62" stroke="#111" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+      <path d="M46 58 Q44 68 52 66" stroke="#111" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+      <!-- Rabo -->
+      <path d="M26 40 Q10 34 4 22" stroke="#c68642" stroke-width="5" fill="none" stroke-linecap="round"/>
+      <path d="M26 40 Q10 34 4 22" stroke="#111" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+    </svg>
+  </div>
+
+  <!-- ===== CONTAINER DO QUIZ ===== -->
+  <div class="quiz-wrapper">
+    <div class="quiz-card" id="quizCard">
+
+      <!-- Cabeçalho com personagens -->
+      <div class="header-characters">
+        <div class="character-box tom-box" aria-hidden="true">
+          <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <!-- Tom gato -->
+            <ellipse cx="50" cy="58" rx="30" ry="26" fill="#6d8fb5" stroke="#111" stroke-width="4"/>
+            <!-- Orelhas -->
+            <polygon points="28,38 22,10 44,26" fill="#6d8fb5" stroke="#111" stroke-width="4" stroke-linejoin="round"/>
+            <polygon points="72,38 78,10 56,26" fill="#6d8fb5" stroke="#111" stroke-width="4" stroke-linejoin="round"/>
+            <polygon points="29,34 26,17 40,27" fill="#f5b7b7"/>
+            <polygon points="71,34 74,17 60,27" fill="#f5b7b7"/>
+            <!-- Olhos -->
+            <ellipse cx="39" cy="52" rx="9" ry="11" fill="#fff" stroke="#111" stroke-width="3"/>
+            <ellipse cx="61" cy="52" rx="9" ry="11" fill="#fff" stroke="#111" stroke-width="3"/>
+            <ellipse cx="41" cy="53" rx="4.5" ry="6" fill="#111"/>
+            <ellipse cx="59" cy="53" rx="4.5" ry="6" fill="#111"/>
+            <circle cx="43" cy="50" r="1.8" fill="#fff"/>
+            <circle cx="61" cy="50" r="1.8" fill="#fff"/>
+            <!-- Sobrancelhas -->
+            <path d="M30 42 Q39 36 48 42" stroke="#111" stroke-width="3" fill="none" stroke-linecap="round"/>
+            <path d="M70 42 Q61 36 52 42" stroke="#111" stroke-width="3" fill="none" stroke-linecap="round"/>
+            <!-- Focinho -->
+            <ellipse cx="50" cy="66" rx="14" ry="9" fill="#f5d6a8" stroke="#111" stroke-width="3"/>
+            <ellipse cx="50" cy="62" rx="5" ry="3.5" fill="#e88a8a" stroke="#111" stroke-width="2"/>
+            <path d="M50 66 L50 72" stroke="#111" stroke-width="2.5" stroke-linecap="round"/>
+            <path d="M42 72 Q50 78 58 72" stroke="#111" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+            <!-- Bigodes -->
+            <line x1="34" y1="64" x2="14" y2="58" stroke="#111" stroke-width="2.5" stroke-linecap="round"/>
+            <line x1="34" y1="69" x2="13" y2="69" stroke="#111" stroke-width="2.5" stroke-linecap="round"/>
+            <line x1="66" y1="64" x2="86" y2="58" stroke="#111" stroke-width="2.5" stroke-linecap="round"/>
+            <line x1="66" y1="69" x2="87" y2="69" stroke="#111" stroke-width="2.5" stroke-linecap="round"/>
+            <!-- Sorriso maroto -->
+            <path d="M38 76 Q50 86 62 76" stroke="#111" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+          </svg>
+        </div>
+
+        <div class="title-area">
+          <h1 class="main-title">Tom &amp; Jerry</h1>
+          <p class="subtitle">🐭 QUIZ MALUCO 🐱</p>
+        </div>
+
+        <div class="character-box" aria-hidden="true">
+          <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <!-- Jerry rato -->
+            <circle cx="50" cy="52" r="30" fill="#c68642" stroke="#111" stroke-width="4"/>
+            <!-- Orelhas -->
+            <ellipse cx="26" cy="26" rx="14" ry="17" fill="#c68642" stroke="#111" stroke-width="4" transform="rotate(-20 26 26)"/>
+            <ellipse cx="74" cy="26" rx="14" ry="17" fill="#c68642" stroke="#111" stroke-width="4" transform="rotate(20 74 26)"/>
+            <ellipse cx="28" cy="28" rx="7" ry="9" fill="#f5b7b7" transform="rotate(-20 28 28)"/>
+            <ellipse cx="72" cy="28" rx="7" ry="9" fill="#f5b7b7" transform="rotate(20 72 28)"/>
+            <!-- Olhos -->
+            <ellipse cx="40" cy="48" rx="8" ry="10" fill="#fff" stroke="#111" stroke-width="3"/>
+            <ellipse cx="60" cy="48" rx="8" ry="10" fill="#fff" stroke="#111" stroke-width="3"/>
+            <circle cx="42" cy="50" r="4" fill="#111"/>
+            <circle cx="58" cy="50" r="4" fill="#111"/>
+            <circle cx="43" cy="48" r="1.5" fill="#fff"/>
+            <circle cx="59" cy="48" r="1.5" fill="#fff"/>
+            <!-- Focinho -->
+            <ellipse cx="50" cy="66" rx="12" ry="8" fill="#f5d6a8" stroke="#111" stroke-width="3"/>
+            <ellipse cx="50" cy="63" rx="4" ry="3" fill="#111"/>
+            <!-- Sorriso -->
+            <path d="M42 70 Q50 78 58 70" stroke="#111" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+            <!-- Bigodes -->
+            <line x1="34" y1="62" x2="14" y2="56" stroke="#111" stroke-width="2.5" stroke-linecap="round"/>
+            <line x1="34" y1="67" x2="13" y2="67" stroke="#111" stroke-width="2.5" stroke-linecap="round"/>
+            <line x1="66" y1="62" x2="86" y2="56" stroke="#111" stroke-width="2.5" stroke-linecap="round"/>
+            <line x1="66" y1="67" x2="87" y2="67" stroke="#111" stroke-width="2.5" stroke-linecap="round"/>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Barra de status -->
+      <div class="status-bar">
+        <div class="timer">
+          <span class="timer-icon">⏱️</span>
+          <span id="timerDisplay">0:00</span>
+        </div>
+        <div class="question-counter">
+          <span class="counter-icon">📋</span>
+          <span id="counterDisplay">1/5</span>
+        </div>
+      </div>
+
+      <!-- Área da pergunta / resultados -->
+      <div class="question-area" id="questionArea">
+        <!-- Conteúdo dinâmico via JS -->
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      'use strict';
+
+      // ========== DADOS DO QUIZ ==========
+      const QUESTIONS = [
+        {
+          question: "Qual é o nome da gata pela qual o Tom tenta chamar atenção?",
+          options: ["Toodles Galore", "Mamãe Dois Sapatos", "Juju", "Fifi"],
+          correct: 0
+        },
+        {
+          question: "Qual é o nome do buldogue que costuma bater no Tom?",
+          options: ["Tyke", "Spike", "Butch", "Rex"],
+          correct: 1
+        },
+        {
+          question: "Qual é o nome do ratinho sobrinho/amigo de fraldinha do Jerry?",
+          options: ["Muscles", "Tuffy / Nibbles", "Quacker", "Tuxedo"],
+          correct: 1
+        },
+        {
+          question: "Qual é o nome da dona humana do Tom que raramente mostra o rosto?",
+          options: ["Mamãe Dois Sapatos", "Dona Célia", "Mamãe Joana", "Sra. Jones"],
+          correct: 0
+        },
+        {
+          question: "Qual é a comida favorita do Jerry que aparece em quase todo episódio?",
+          options: ["Queijo", "Leite", "Bolo", "Maçã"],
+          correct: 0
+        }
+      ];
+
+      // ========== ESTADO DO JOGO ==========
+      let currentQuestionIndex = 0;
+      let correctCount = 0;
+      let wrongCount = 0;
+      let timerInterval = null;
+      let secondsElapsed = 0;
+      let quizFinished = false;
+      let answerLocked = false;
+      let transitionTimeout = null;
+
+      // ========== ELEMENTOS DO DOM ==========
+      const questionArea = document.getElementById('questionArea');
+      const timerDisplay = document.getElementById('timerDisplay');
+      const counterDisplay = document.getElementById('counterDisplay');
+      const quizCard = document.getElementById('quizCard');
+
+      // ========== FUNÇÕES DO TIMER ==========
+      function formatTime(totalSeconds) {
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = totalSeconds % 60;
+        return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+      }
+
+      function startTimer() {
+        stopTimer();
+        secondsElapsed = 0;
+        timerDisplay.textContent = formatTime(0);
+        timerInterval = setInterval(() => {
+          secondsElapsed++;
+          timerDisplay.textContent = formatTime(secondsElapsed);
+        }, 1000);
+      }
+
+      function stopTimer() {
+        if (timerInterval) {
+          clearInterval(timerInterval);
+          timerInterval = null;
+        }
+      }
+
+      // ========== RENDERIZAÇÃO ==========
+      function renderQuestion() {
+        if (transitionTimeout) {
+          clearTimeout(transitionTimeout);
+          transitionTimeout = null;
+        }
+
+        const q = QUESTIONS[currentQuestionIndex];
+        counterDisplay.textContent = `${currentQuestionIndex + 1}/${QUESTIONS.length}`;
+        answerLocked = false;
+
+        // Constrói o HTML da pergunta
+        const screen = document.createElement('div');
+        screen.className = 'question-screen';
+
+        const questionText = document.createElement('div');
+        questionText.className = 'question-text';
+        questionText.textContent = q.question;
+
+        const optionsGrid = document.createElement('div');
+        optionsGrid.className = 'options-grid';
+
+        q.options.forEach((optionText, index) => {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'option-btn';
+          btn.textContent = optionText;
+          btn.dataset.index = index;
+          btn.addEventListener('click', () => handleAnswer(index, btn));
+          optionsGrid.appendChild(btn);
+        });
+
+        screen.appendChild(questionText);
+        screen.appendChild(optionsGrid);
+
+        questionArea.innerHTML = '';
+        questionArea.appendChild(screen);
+      }
+
+      // ========== LÓGICA DE RESPOSTA ==========
+      function handleAnswer(selectedIndex, selectedBtn) {
+        if (answerLocked || quizFinished) return;
+        answerLocked = true;
+
+        const q = QUESTIONS[currentQuestionIndex];
+        const isCorrect = selectedIndex === q.correct;
+
+        // Desabilita todos os botões
+        const allButtons = questionArea.querySelectorAll('.option-btn');
+        allButtons.forEach(btn => { btn.disabled = true; });
+
+        // Marca visualmente a resposta correta
+        const correctBtn = allButtons[q.correct];
+        correctBtn.classList.add('correct');
+        correctBtn.innerHTML = `${correctBtn.textContent}<span class="feedback-icon">✅</span>`;
+
+        if (isCorrect) {
+          correctCount++;
+        } else {
+          wrongCount++;
+          selectedBtn.classList.add('wrong');
+          selectedBtn.innerHTML = `${selectedBtn.textContent}<span class="feedback-icon">❌</span>`;
+        }
+
+        // Animação de saída e próxima pergunta
+        const screen = questionArea.querySelector('.question-screen');
+        if (screen) {
+          screen.classList.add('slide-out');
+        }
+
+        const delay = isCorrect ? 700 : 1000;
+
+        transitionTimeout = setTimeout(() => {
+          currentQuestionIndex++;
+
+          if (currentQuestionIndex < QUESTIONS.length) {
+            renderQuestion();
+          } else {
+            finishQuiz();
+          }
+          transitionTimeout = null;
+        }, delay);
+      }
+
+      // ========== TELA DE RESULTADOS ==========
+      function finishQuiz() {
+        quizFinished = true;
+        stopTimer();
+
+        counterDisplay.textContent = `${QUESTIONS.length}/${QUESTIONS.length}`;
+
+        const totalQuestions = QUESTIONS.length;
+        const percentage = Math.round((correctCount / totalQuestions) * 100);
+        let message = '';
+        let emoji = '';
+
+        if (percentage === 100) {
+          message = 'PERFEITO! Você é um mestre dos desenhos!';
+          emoji = '🏆';
+        } else if (percentage >= 80) {
+          message = 'Muito bem! Você conhece Tom e Jerry!';
+          emoji = '🎉';
+        } else if (percentage >= 60) {
+          message = 'Nada mal! Mas ainda dá pra melhorar!';
+          emoji = '👍';
+        } else if (percentage >= 40) {
+          message = 'Hmm... Hora de reassistir aos clássicos!';
+          emoji = '🤔';
+        } else {
+          message = 'Ops! Jerry fugiu com suas respostas!';
+          emoji = '😅';
+        }
+
+        const resultsScreen = document.createElement('div');
+        resultsScreen.className = 'results-screen';
+
+        resultsScreen.innerHTML = `
+          <div class="trophy">${emoji}</div>
+          <h2 class="results-title">FIM DE JOGO!</h2>
+          <p style="font-weight:700; font-size:1.05rem; color:#2a5298; margin: -2px 0 8px;">${message}</p>
+          <div class="stats-grid">
+            <div class="stat-box acertos">
+              <span class="stat-value">${correctCount}</span>
+              <span class="stat-label">Acertos</span>
+            </div>
+            <div class="stat-box erros">
+              <span class="stat-value">${wrongCount}</span>
+              <span class="stat-label">Erros</span>
+            </div>
+            <div class="stat-box">
+              <span class="stat-value">${formatTime(secondsElapsed)}</span>
+              <span class="stat-label">Tempo</span>
+            </div>
+          </div>
+          <button type="button" class="play-again-btn" id="playAgainBtn">JOGAR NOVAMENTE</button>
+        `;
+
+        questionArea.innerHTML = '';
+        questionArea.appendChild(resultsScreen);
+
+        // Evento do botão jogar novamente
+        const playAgainBtn = document.getElementById('playAgainBtn');
+        playAgainBtn.addEventListener('click', resetQuiz);
+      }
+
+      // ========== REINICIAR QUIZ ==========
+      function resetQuiz() {
+        // Reseta estado
+        currentQuestionIndex = 0;
+        correctCount = 0;
+        wrongCount = 0;
+        quizFinished = false;
+        answerLocked = false;
+        secondsElapsed = 0;
+
+        if (transitionTimeout) {
+          clearTimeout(transitionTimeout);
+          transitionTimeout = null;
+        }
+
+        // Reinicia timer
+        startTimer();
+
+        // Animação de reinício no card
+        quizCard.style.animation = 'none';
+        void quizCard.offsetHeight; // força reflow
+        quizCard.style.animation = 'cardPop 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) both';
+
+        // Renderiza primeira pergunta
+        renderQuestion();
+      }
+
+      // ========== INICIALIZAÇÃO ==========
+      function init() {
+        resetQuiz();
+      }
+
+      // Inicia quando o DOM estiver pronto
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+      } else {
+        init();
+      }
+
+    })();
+  </script>
+</body>
+</html>
